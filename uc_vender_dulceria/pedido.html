@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resumen del Pedido — Dulcería</title>
+<style>
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; background:#0E0F12; color:#ECEFF7; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; }
+a { color: inherit; text-decoration: none; }
+button, .btn { background:#1F232B; border:1px solid #2A2E37; color:#ECEFF7; border-radius:8px; padding:10px 14px; cursor:pointer; }
+.btn.primary { background:#F2B705; color:#111; border-color:#F2B705; }
+.container { max-width:1040px; margin:0 auto; padding:24px; }
+.h { font-weight:800; margin:8px 0; font-size:20px; }
+.hr { height:1px; background:#2A2E37; border:0; margin:12px 0; }
+.row { display:flex; gap:8px; align-items:center; }
+.row-spc { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.block { border:1px solid #2A2E37; border-radius:12px; padding:16px; background:#13161B; margin-top:12px; }
+.table { width:100%; border-collapse:collapse; margin-top:12px; }
+.table th, .table td { border-bottom:1px solid #2A2E37; padding:10px; text-align:left; }
+.table th { background:#161A22; }
+.table td.actions { text-align:center; }
+.notice { padding:10px 12px; border:1px solid #2A2E37; border-radius:8px; background:#151923; color:#DDE3F1; margin-top:8px; }
+.notice.ok { border-color:#27562E; background:#17231A; color:#C2E5C7; }
+.footer { margin-top:24px; border-top:1px solid #2A2E37; padding-top:12px; display:flex; justify-content:space-between; align-items:center; }
+.totalbox { text-align:right; }
+.totalbox div { margin:4px 0; }
+.empty { text-align:center; color:#A7AEBE; padding:20px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="row-spc">
+    <div class="h">Butaca Para Uno — Resumen del Pedido</div>
+    <div class="row">
+      <a class="btn" href="catalogo.html">Catálogo</a>
+      <a class="btn" href="cancelar.html">Cancelar Venta</a>
+    </div>
+  </div>
+
+  <div class="hr"></div>
+
+  <div class="block">
+    <div class="h" style="font-size:16px;">Detalles del Pedido</div>
+    <table class="table" id="tabla-pedido">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Tipo</th>
+          <th>Cant.</th>
+          <th>Precio (S/)</th>
+          <th>Subtotal (S/)</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="pedido-body">
+        <tr><td colspan="6" class="empty">No hay productos en el pedido.</td></tr>
+      </tbody>
+    </table>
+    <div id="msg" class="notice">Puede modificar las cantidades o eliminar productos antes de continuar.</div>
+  </div>
+
+  <div class="footer">
+    <div class="row" style="gap:8px;">
+      <a class="btn" href="catalogo.html">Agregar más</a>
+      <a class="btn" href="promociones.html">Añadir Promoción</a>
+    </div>
+    <div class="totalbox">
+      <div>Subtotal: <span id="subtotal">S/ 0.00</span></div>
+      <div>IGV (18%): <span id="igv">S/ 0.00</span></div>
+      <div style="font-weight:800;">Total: <span id="total">S/ 0.00</span></div>
+      <div style="margin-top:8px;">
+        <a class="btn primary" href="cliente_pago.html" id="btn-continuar">Proceder al Pago</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* === Datos simulados o desde localStorage === */
+const productos = [
+  { id:1, nombre:"Palomitas Mantequilla", tipo:"Alimento", precio:15 },
+  { id:2, nombre:"Palomitas Dulces", tipo:"Alimento", precio:17 },
+  { id:3, nombre:"Gaseosa Grande", tipo:"Bebida", precio:12 },
+  { id:4, nombre:"Gaseosa Mediana", tipo:"Bebida", precio:10 },
+  { id:5, nombre:"Combo 1 (Palomitas + Gaseosa)", tipo:"Combo", precio:25 },
+  { id:6, nombre:"Combo 2 (2 Palomitas + 2 Bebidas)", tipo:"Combo", precio:45 },
+  { id:7, nombre:"Agua Mineral", tipo:"Bebida", precio:8 },
+  { id:8, nombre:"Chocolate", tipo:"Dulce", precio:9 },
+];
+
+/* Cargar pedido simulado (puede venir de localStorage) */
+let pedido = JSON.parse(localStorage.getItem("pedido_dulceria") || "{}");
+if(Object.keys(pedido).length === 0){
+  // demo: simulamos 2 items
+  pedido = { "1":2, "3":1, "8":1 };
+}
+
+/* === Renderizado === */
+function renderPedido(){
+  const body = document.getElementById("pedido-body");
+  body.innerHTML = "";
+  const keys = Object.keys(pedido);
+  if(keys.length===0){
+    body.innerHTML = '<tr><td colspan="6" class="empty">No hay productos en el pedido.</td></tr>';
+    recalc();
+    return;
+  }
+
+  keys.forEach(id=>{
+    const prod = productos.find(p=>p.id==id);
+    if(!prod) return;
+    const subtotal = prod.precio * pedido[id];
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${prod.nombre}</td>
+      <td>${prod.tipo}</td>
+      <td>
+        <div class="row" style="gap:4px;">
+          <button class="btn" data-id="${id}" data-act="menos">-</button>
+          <span>${pedido[id]}</span>
+          <button class="btn primary" data-id="${id}" data-act="mas">+</button>
+        </div>
+      </td>
+      <td>${prod.precio.toFixed(2)}</td>
+      <td>${subtotal.toFixed(2)}</td>
+      <td class="actions"><button class="btn" data-id="${id}" data-act="del">🗑️</button></td>
+    `;
+    body.appendChild(tr);
+  });
+  recalc();
+}
+
+/* === Recalcular === */
+function recalc(){
+  let subtotal = 0;
+  for(const [id,cant] of Object.entries(pedido)){
+    const prod = productos.find(p=>p.id==id);
+    if(prod) subtotal += prod.precio * cant;
+  }
+  const igv = +(subtotal*0.18).toFixed(2);
+  const total = +(subtotal+igv).toFixed(2);
+  document.getElementById("subtotal").textContent = "S/ " + subtotal.toFixed(2);
+  document.getElementById("igv").textContent = "S/ " + igv.toFixed(2);
+  document.getElementById("total").textContent = "S/ " + total.toFixed(2);
+}
+
+/* === Acciones === */
+document.addEventListener("click", e=>{
+  if(e.target.dataset.act){
+    const id = e.target.dataset.id;
+    const act = e.target.dataset.act;
+    if(act==="mas") pedido[id]++;
+    else if(act==="menos" && pedido[id]>1) pedido[id]--;
+    else if(act==="menos" && pedido[id]===1) delete pedido[id];
+    else if(act==="del") delete pedido[id];
+    localStorage.setItem("pedido_dulceria", JSON.stringify(pedido));
+    renderPedido();
+  }
+});
+
+/* Inicial */
+renderPedido();
+</script>
+</body>
+</html>

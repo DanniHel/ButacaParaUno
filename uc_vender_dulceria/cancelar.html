@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cancelar Venta — Dulcería</title>
+<style>
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; background:#0E0F12; color:#ECEFF7; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+a { color: inherit; text-decoration: none; }
+button, .btn { background:#1F232B; border:1px solid #2A2E37; color:#ECEFF7; border-radius:8px; padding:10px 14px; cursor:pointer; }
+.btn.primary { background:#F2B705; color:#111; border-color:#F2B705; }
+.container { max-width:1040px; margin:0 auto; padding:24px; }
+.h { font-weight:800; margin:8px 0; font-size:20px; }
+.hr { height:1px; background:#2A2E37; border:0; margin:12px 0; }
+.row { display:flex; gap:8px; align-items:center; }
+.row-spc { display:flex; justify-content: space-between; align-items:center; gap:12px; }
+.block { border:1px solid #2A2E37; border-radius:12px; padding:16px; background:#13161B; margin-top:12px; }
+.notice { padding:10px 12px; border:1px solid #2A2E37; border-radius:8px; background:#151923; color:#DDE3F1; margin-top:8px; }
+.notice.error { border-color:#7D2D2D; background:#2A1B1B; color:#F2C9C9; }
+.input { background:#161A22; border:1px solid #2A2E37; border-radius:8px; padding:10px; color:#ECEFF7; width:100%; resize:none; }
+.actions { display:flex; gap:12px; justify-content:flex-end; margin-top:16px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="row-spc">
+    <div class="h">Butaca Para Uno — Cancelar Venta</div>
+    <div class="row">
+      <a class="btn" href="inicio_dulceria.html">Inicio</a>
+      <a class="btn" href="resumen_pedido.html">Volver</a>
+    </div>
+  </div>
+
+  <div class="hr"></div>
+
+  <div class="block">
+    <div class="notice error">
+      ⚠️ Está a punto de <strong>cancelar la venta actual</strong>.  
+      Esta acción eliminará todos los datos del pedido en curso.
+    </div>
+
+    <label for="motivo" class="h" style="font-size:16px;margin-top:12px;">Motivo de cancelación (opcional):</label>
+    <textarea id="motivo" class="input" rows="4" placeholder="Ejemplo: el cliente cambió de opinión..."></textarea>
+
+    <div class="actions">
+      <button class="btn" onclick="volver()">Volver</button>
+      <button class="btn primary" onclick="confirmarCancelacion()">Confirmar Cancelación</button>
+    </div>
+  </div>
+
+  <div id="msg" class="notice" style="display:none;"></div>
+</div>
+
+<script>
+function volver(){
+  window.history.back();
+}
+
+function confirmarCancelacion(){
+  const motivo = document.getElementById("motivo").value.trim();
+  const msg = document.getElementById("msg");
+  
+  // Limpiar datos simulados
+  localStorage.removeItem("pedido_dulceria");
+  localStorage.removeItem("promo_aplicada");
+  localStorage.removeItem("cliente_pago");
+  localStorage.removeItem("total_venta");
+
+  msg.style.display = "block";
+  msg.className = "notice ok";
+  msg.textContent = motivo 
+    ? `Venta cancelada correctamente. Motivo registrado: "${motivo}".`
+    : "Venta cancelada correctamente.";
+
+  setTimeout(()=>{
+    window.location.href = "inicio_dulceria.html";
+  }, 1800);
+}
+</script>
+</body>
+</html>

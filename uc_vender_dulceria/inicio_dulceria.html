@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inicio — Dulcería</title>
+<style>
+/* --- Basado exactamente en el formato/colores que proporcionaste --- */
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; background:#0E0F12; color:#ECEFF7; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; }
+a { color: inherit; text-decoration: none; }
+button, .btn { background:#1F232B; border:1px solid #2A2E37; color:#ECEFF7; border-radius:8px; padding:10px 14px; cursor:pointer; }
+.btn.primary { background:#F2B705; color:#111; border-color:#F2B705; }
+.container { max-width: 1040px; margin: 0 auto; padding: 24px; }
+.h { font-weight: 800; margin: 8px 0; font-size:20px; }
+.hr { height:1px; background:#2A2E37; border:0; margin:12px 0; }
+.row { display:flex; gap:8px; align-items:center; }
+.row-spc { display:flex; justify-content: space-between; align-items:center; gap:12px; }
+.block { border:1px solid #2A2E37; border-radius:12px; padding:16px; background:#13161B; margin-top:12px; }
+.input { background:#161A22; border:1px solid #2A2E37; border-radius:8px; padding:10px; color:#ECEFF7; }
+.table { width:100%; border-collapse: collapse; }
+.table th, .table td { border-bottom:1px solid #2A2E37; padding:10px; text-align:left; }
+.notice { padding:10px 12px; border:1px solid #2A2E37; border-radius:8px; background:#151923; color:#DDE3F1; margin-top:8px; }
+.grid { display:grid; grid-template-columns: 1fr 320px; gap:14px; align-items:start; }
+.card { border:1px solid #2A2E37; border-radius:12px; overflow:hidden; background:#151820; }
+.card .body { padding:12px; }
+.meta { color:#A7AEBE; font-size:14px; }
+.kpi { display:flex; gap:12px; align-items:center; }
+.kpi .tile { background:#101317; border:1px solid #2A2E37; padding:12px; border-radius:10px; min-width:120px; text-align:center; }
+.small { font-size:13px; color:#A7AEBE; }
+.actions { display:flex; gap:8px; margin-top:12px; }
+.icon { width:36px; height:36px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; background:#0F1114; border:1px solid #2A2E37; }
+.list { display:flex; flex-direction:column; gap:8px; }
+.shortcut { display:flex; gap:12px; align-items:center; border:1px solid #2A2E37; padding:10px; border-radius:8px; background:#0F1317; cursor:pointer; }
+.shortcut .title { font-weight:700; }
+.badge { font-size:12px; border:1px solid #2A2E37; border-radius:999px; padding:4px 8px; color:#A7AEBE; }
+.clock { font-weight:700; font-size:14px; color:#F2B705; }
+.empty { color:#7F8794; font-size:14px; padding:18px; text-align:center; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="row-spc">
+    <div>
+      <div class="h">Butaca Para Uno — Dulcería</div>
+      <div class="small">Módulo de venta de productos (POS) — Empleado: <strong id="empleado-name">--</strong></div>
+    </div>
+    <div class="row">
+      <div class="clock" id="clock">--:--</div>
+      <a class="btn" href="inicio_dulceria.html" title="Refrescar">Refrescar</a>
+      <a class="btn" href="cancelar.html">Cancelar Venta</a>
+    </div>
+  </div>
+
+  <div class="hr"></div>
+
+  <div class="grid">
+    <!-- Columna izquierda: Acciones / KPIs / Últimas ventas -->
+    <div>
+      <div class="row" style="justify-content:space-between; align-items:center;">
+        <div class="h" style="font-size:18px;">Acciones Rápidas</div>
+        <div class="meta">Sesión activa</div>
+      </div>
+
+      <div class="block">
+        <div class="row" style="gap:12px; margin-bottom:12px;">
+          <button class="btn primary" id="btn-nueva-venta">Nueva Venta</button>
+          <button class="btn" id="btn-catalogo">Catálogo</button>
+          <button class="btn" id="btn-inv">Inventario</button>
+          <button class="btn" id="btn-reportes">Reportes</button>
+        </div>
+
+        <div class="kpi" style="margin-top:6px;">
+          <div class="tile">
+            <div class="small">Ventas hoy</div>
+            <div style="font-size:18px; font-weight:800;" id="kpi-ventas">0</div>
+          </div>
+          <div class="tile">
+            <div class="small">Monto (S/)</div>
+            <div style="font-size:18px; font-weight:800;" id="kpi-monto">S/ 0.00</div>
+          </div>
+          <div class="tile">
+            <div class="small">Items vendidos</div>
+            <div style="font-size:18px; font-weight:800;" id="kpi-items">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="block" style="margin-top:14px;">
+        <div class="h" style="font-size:16px;">Búsqueda rápida</div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <input id="search" class="input" placeholder="Buscar producto por nombre o código..." />
+          <button class="btn" id="search-btn">Buscar</button>
+        </div>
+        <div id="search-result" class="notice" style="margin-top:12px;">Resultados aparecerán aquí.</div>
+      </div>
+
+      <div class="block" style="margin-top:14px;">
+        <div class="h" style="font-size:16px;">Últimas ventas</div>
+        <div id="ultimas" class="list" style="margin-top:10px; max-height:220px; overflow:auto;">
+          <div class="empty">No hay ventas recientes.</div>
+        </div>
+        <div style="margin-top:12px; display:flex; justify-content:flex-end;">
+          <a class="btn" id="ver-todas">Ver todas</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Columna derecha: Atajos / Promos / Notificaciones -->
+    <div>
+      <div class="card">
+        <div class="body">
+          <div class="row-spc">
+            <div>
+              <div class="h" style="font-size:16px;">Atajos</div>
+              <div class="small">Accesos útiles para el turno</div>
+            </div>
+            <div class="badge" id="turno-badge">Turno A</div>
+          </div>
+
+          <div class="list" style="margin-top:12px;">
+            <div class="shortcut" id="shortcut-combos" title="Abrir combos">
+              <div class="icon">🍿</div>
+              <div>
+                <div class="title">Combos Populares</div>
+                <div class="small">Palomitas + Bebida</div>
+              </div>
+            </div>
+
+            <div class="shortcut" id="shortcut-efectivo" title="Cobrar en efectivo">
+              <div class="icon">💵</div>
+              <div>
+                <div class="title">Caja / Efectivo</div>
+                <div class="small">Abrir caja de efectivo</div>
+              </div>
+            </div>
+
+            <div class="shortcut" id="shortcut-promos" title="Promociones">
+              <div class="icon">🏷️</div>
+              <div>
+                <div class="title">Promociones</div>
+                <div class="small">Aplicar descuentos rápidos</div>
+              </div>
+            </div>
+
+            <div class="shortcut" id="shortcut-soporte" title="Soporte">
+              <div class="icon">⚙️</div>
+              <div>
+                <div class="title">Soporte</div>
+                <div class="small">Reportar incidencia</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <div class="body">
+          <div class="h" style="font-size:16px;">Notificaciones</div>
+          <div id="notifs" class="small" style="margin-top:8px;">
+            <div class="notice">Sistema listo. Recordatorio: IGV 18% aplicado automáticamente.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <div class="body">
+          <div class="h" style="font-size:16px;">Estado Rápido</div>
+          <div class="small" style="margin-top:8px;">Conexión con periféricos</div>
+          <div style="display:flex; gap:8px; margin-top:10px;">
+            <div class="tile" style="flex:1; text-align:left;">
+              <div class="small">Impresora</div>
+              <div id="imp-status" style="font-weight:700; margin-top:6px;">Conectada</div>
+            </div>
+            <div class="tile" style="flex:1; text-align:left;">
+              <div class="small">Terminal</div>
+              <div id="term-status" style="font-weight:700; margin-top:6px;">Conectado</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* Simula datos locales y manejo simple */
+const empleado = { nombre: "María López", id: "ED-001" };
+const ventasHoy = [
+  { id: "V-1001", importe: 45.00, items: 3, hora: "09:12" },
+  { id: "V-1002", importe: 27.00, items: 2, hora: "09:35" },
+  { id: "V-1003", importe: 60.50, items: 4, hora: "10:04" }
+];
+
+document.getElementById('empleado-name').textContent = empleado.nombre;
+
+/* Reloj */
+function updateClock(){
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('clock').textContent = hh + ":" + mm;
+}
+updateClock();
+setInterval(updateClock, 1000 * 30);
+
+/* KPIs */
+function updateKPIs(){
+  const ventas = ventasHoy.length;
+  const monto = ventasHoy.reduce((s,v)=>s+v.importe,0);
+  const items = ventasHoy.reduce((s,v)=>s+v.items,0);
+  document.getElementById('kpi-ventas').textContent = ventas;
+  document.getElementById('kpi-monto').textContent = 'S/ ' + monto.toFixed(2);
+  document.getElementById('kpi-items').textContent = items;
+}
+updateKPIs();
+
+/* Mostrar últimas ventas */
+function renderUltimas(){
+  const el = document.getElementById('ultimas');
+  el.innerHTML = "";
+  if(ventasHoy.length===0){
+    el.innerHTML = '<div class="empty">No hay ventas recientes.</div>';
+    return;
+  }
+  ventasHoy.slice().reverse().forEach(v=>{
+    const d = document.createElement('div');
+    d.className = 'shortcut';
+    d.style.justifyContent = 'space-between';
+    d.style.padding = '10px';
+    d.style.cursor = 'default';
+    d.innerHTML = `<div>
+                     <div style="font-weight:700">${v.id} <span class="small" style="color:#A7AEBE; font-weight:500">· ${v.hora}</span></div>
+                     <div class="small">Items: ${v.items}</div>
+                   </div>
+                   <div style="text-align:right;">
+                     <div style="font-weight:800">S/ ${v.importe.toFixed(2)}</div>
+                   </div>`;
+    el.appendChild(d);
+  });
+}
+renderUltimas();
+
+/* Búsqueda simulada */
+document.getElementById('search-btn').addEventListener('click', ()=>{
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const res = document.getElementById('search-result');
+  if(!q){ res.textContent = 'Ingrese término de búsqueda.'; return; }
+  // simulación: coincide si contiene 'palo' 'bebida' o 'combo'
+  if(q.includes('palo')||q.includes('palom')||q.includes('combo')||q.includes('bebida')){
+    res.className = 'notice ok';
+    res.textContent = 'Productos encontrados. Abrir catálogo para añadir al pedido.';
+  } else {
+    res.className = 'notice';
+    res.textContent = 'No se encontraron coincidencias locales.';
+  }
+});
+
+/* Navegación rápida (asume que los otros archivos existirán) */
+document.getElementById('btn-nueva-venta').addEventListener('click', ()=> location.href = 'catalogo.html');
+document.getElementById('btn-catalogo').addEventListener('click', ()=> location.href = 'catalogo.html');
+document.getElementById('btn-inv').addEventListener('click', ()=> location.href = 'inventario.html');
+document.getElementById('btn-reportes').addEventListener('click', ()=> location.href = 'reportes.html');
+document.getElementById('ver-todas').addEventListener('click', ()=> location.href = 'ventas.html');
+
+/* Atajos */
+document.getElementById('shortcut-combos').addEventListener('click', ()=> location.href = 'catalogo.html#combos');
+document.getElementById('shortcut-efectivo').addEventListener('click', ()=> location.href = 'pedido.html');
+document.getElementById('shortcut-promos').addEventListener('click', ()=> location.href = 'promociones.html');
+document.getElementById('shortcut-soporte').addEventListener('click', ()=> alert('Enviar reporte al soporte (simulado).'));
+
+/* Simula estado periféricos (podrías sustituir con checks reales) */
+setTimeout(()=> document.getElementById('imp-status').textContent = 'Conectada', 500);
+setTimeout(()=> document.getElementById('term-status').textContent = 'Conectado', 800);
+
+/* Opcional: puedes rellenar "ventasHoy" desde localStorage o llamada API */
+</script>
+</body>
+</html>

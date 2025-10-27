@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catálogo — Dulcería</title>
+<style>
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; background:#0E0F12; color:#ECEFF7; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; }
+a { color: inherit; text-decoration: none; }
+button, .btn { background:#1F232B; border:1px solid #2A2E37; color:#ECEFF7; border-radius:8px; padding:10px 14px; cursor:pointer; }
+.btn.primary { background:#F2B705; color:#111; border-color:#F2B705; }
+.container { max-width:1040px; margin:0 auto; padding:24px; }
+.h { font-weight:800; margin:8px 0; font-size:20px; }
+.hr { height:1px; background:#2A2E37; border:0; margin:12px 0; }
+.row { display:flex; gap:8px; align-items:center; }
+.row-spc { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.block { border:1px solid #2A2E37; border-radius:12px; padding:16px; background:#13161B; margin-top:12px; }
+.input { background:#161A22; border:1px solid #2A2E37; border-radius:8px; padding:10px; color:#ECEFF7; }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; margin-top:12px; }
+.card { border:1px solid #2A2E37; border-radius:12px; overflow:hidden; background:#151820; display:flex; flex-direction:column; }
+.card img { display:block; width:100%; height:150px; object-fit:cover; }
+.card .body { padding:12px; flex:1; display:flex; flex-direction:column; justify-content:space-between; }
+.price { font-weight:700; color:#F2B705; margin-top:6px; }
+.actions { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px; }
+.notice { padding:10px 12px; border:1px solid #2A2E37; border-radius:8px; background:#151923; color:#DDE3F1; margin-top:8px; }
+.notice.ok { border-color:#27562E; background:#17231A; color:#C2E5C7; }
+.footer { margin-top:24px; border-top:1px solid #2A2E37; padding-top:12px; display:flex; justify-content:space-between; align-items:center; }
+.totalbox { text-align:right; }
+.totalbox div { margin:4px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="row-spc">
+    <div class="h">Butaca Para Uno — Catálogo de Dulcería</div>
+    <div class="row">
+      <a class="btn" href="inicio_dulceria.html">Inicio</a>
+      <a class="btn" href="cancelar.html">Cancelar Venta</a>
+    </div>
+  </div>
+
+  <div class="hr"></div>
+
+  <div class="row" style="margin-bottom:8px;">
+    <input id="search" class="input" style="flex:1;" placeholder="Buscar producto...">
+    <button class="btn" id="btn-search">Buscar</button>
+  </div>
+
+  <div id="catalogo" class="grid"></div>
+
+  <div id="msg" class="notice">Seleccione los productos para el pedido.</div>
+
+  <div class="footer">
+    <div class="row" style="gap:8px;">
+      <button class="btn" id="btn-clear">Limpiar Pedido</button>
+    </div>
+    <div class="totalbox">
+      <div>Subtotal: <span id="subtotal">S/ 0.00</span></div>
+      <div>IGV (18%): <span id="igv">S/ 0.00</span></div>
+      <div style="font-weight:800;">Total: <span id="total">S/ 0.00</span></div>
+      <div style="margin-top:8px;">
+        <a class="btn primary" href="pedido.html" id="btn-continuar">Continuar</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* === Datos simulados === */
+const productos = [
+  { id:1, nombre:"Palomitas Mantequilla", tipo:"Alimento", precio:15, img:"https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=500" },
+  { id:2, nombre:"Palomitas Dulces", tipo:"Alimento", precio:17, img:"https://images.unsplash.com/photo-1606787366850-de6330128bfc?w=500" },
+  { id:3, nombre:"Gaseosa Grande", tipo:"Bebida", precio:12, img:"https://images.unsplash.com/photo-1562059390-a761a084768e?w=500" },
+  { id:4, nombre:"Gaseosa Mediana", tipo:"Bebida", precio:10, img:"https://images.unsplash.com/photo-1590080875831-7a53a4d4a4f8?w=500" },
+  { id:5, nombre:"Combo 1 (Palomitas + Gaseosa)", tipo:"Combo", precio:25, img:"https://images.unsplash.com/photo-1611244419377-6cda02b3074b?w=500" },
+  { id:6, nombre:"Combo 2 (2 Palomitas + 2 Bebidas)", tipo:"Combo", precio:45, img:"https://images.unsplash.com/photo-1627308595229-7830a5c91f9f?w=500" },
+  { id:7, nombre:"Agua Mineral", tipo:"Bebida", precio:8, img:"https://images.unsplash.com/photo-1587502536263-929e03f595c5?w=500" },
+  { id:8, nombre:"Chocolate", tipo:"Dulce", precio:9, img:"https://images.unsplash.com/photo-1615485298967-7a6a7d6e8b8d?w=500" },
+];
+
+let pedido = {}; // { idProducto: cantidad }
+
+/* === Render === */
+function renderCatalogo(list){
+  const cont = document.getElementById("catalogo");
+  cont.innerHTML = "";
+  list.forEach(p=>{
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <img src="${p.img}" alt="${p.nombre}">
+      <div class="body">
+        <div>
+          <div style="font-weight:700;">${p.nombre}</div>
+          <div class="price">S/ ${p.precio.toFixed(2)}</div>
+          <div class="meta">${p.tipo}</div>
+        </div>
+        <div class="actions">
+          <button class="btn" data-id="${p.id}" data-action="minus">-</button>
+          <div id="qty-${p.id}" class="meta">${pedido[p.id]||0}</div>
+          <button class="btn primary" data-id="${p.id}" data-action="plus">+</button>
+        </div>
+      </div>`;
+    cont.appendChild(card);
+  });
+}
+
+/* === Recalcular Totales === */
+function recalc(){
+  let subtotal = 0;
+  for(const [id,cant] of Object.entries(pedido)){
+    const prod = productos.find(p=>p.id==id);
+    if(prod) subtotal += prod.precio * cant;
+  }
+  const igv = +(subtotal*0.18).toFixed(2);
+  const total = +(subtotal+igv).toFixed(2);
+  document.getElementById("subtotal").textContent = "S/ " + subtotal.toFixed(2);
+  document.getElementById("igv").textContent = "S/ " + igv.toFixed(2);
+  document.getElementById("total").textContent = "S/ " + total.toFixed(2);
+}
+
+/* === Clicks === */
+document.addEventListener("click", e=>{
+  if(e.target.matches("[data-action]")){
+    const id = parseInt(e.target.dataset.id);
+    const action = e.target.dataset.action;
+    if(!pedido[id]) pedido[id]=0;
+    if(action==="plus") pedido[id]++;
+    else if(action==="minus" && pedido[id]>0) pedido[id]--;
+    document.getElementById(`qty-${id}`).textContent = pedido[id];
+    recalc();
+  }
+});
+
+document.getElementById("btn-clear").addEventListener("click", ()=>{
+  pedido = {};
+  renderCatalogo(productos);
+  recalc();
+  document.getElementById("msg").textContent = "Pedido reiniciado.";
+});
+
+document.getElementById("btn-search").addEventListener("click", ()=>{
+  const q = document.getElementById("search").value.trim().toLowerCase();
+  if(!q){ renderCatalogo(productos); return; }
+  const results = productos.filter(p=> p.nombre.toLowerCase().includes(q));
+  renderCatalogo(results.length?results:productos);
+  document.getElementById("msg").textContent = results.length? `Resultados: ${results.length}` : "Sin coincidencias, mostrando todo.";
+});
+
+/* Inicial */
+renderCatalogo(productos);
+recalc();
+</script>
+</body>
+</html>

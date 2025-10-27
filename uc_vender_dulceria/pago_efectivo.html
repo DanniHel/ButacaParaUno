@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pago en Efectivo — Dulcería</title>
+<style>
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; background:#0E0F12; color:#ECEFF7; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+a { color: inherit; text-decoration: none; }
+button, .btn { background:#1F232B; border:1px solid #2A2E37; color:#ECEFF7; border-radius:8px; padding:10px 14px; cursor:pointer; }
+.btn.primary { background:#F2B705; color:#111; border-color:#F2B705; }
+.container { max-width:1040px; margin:0 auto; padding:24px; }
+.h { font-weight:800; margin:8px 0; font-size:20px; }
+.hr { height:1px; background:#2A2E37; border:0; margin:12px 0; }
+.row { display:flex; gap:8px; align-items:center; }
+.row-spc { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.block { border:1px solid #2A2E37; border-radius:12px; padding:16px; background:#13161B; margin-top:12px; }
+.input { background:#161A22; border:1px solid #2A2E37; border-radius:8px; padding:10px; color:#ECEFF7; width:100%; text-align:right; font-size:16px; }
+.notice { padding:10px 12px; border:1px solid #2A2E37; border-radius:8px; background:#151923; color:#DDE3F1; margin-top:8px; }
+.notice.ok { border-color:#27562E; background:#17231A; color:#C2E5C7; }
+.notice.error { border-color:#7D2D2D; background:#2A1B1B; color:#F2C9C9; }
+.footer { margin-top:24px; border-top:1px solid #2A2E37; padding-top:12px; display:flex; justify-content:space-between; align-items:center; }
+.totalbox { text-align:right; }
+.totalbox div { margin:4px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="row-spc">
+    <div class="h">Butaca Para Uno — Pago en Efectivo</div>
+    <div class="row">
+      <a class="btn" href="cliente_pago.html">Volver</a>
+      <a class="btn" href="cancelar.html">Cancelar Venta</a>
+    </div>
+  </div>
+
+  <div class="hr"></div>
+
+  <div class="block">
+    <div class="h" style="font-size:16px;">Monto a Pagar</div>
+    <div style="font-size:28px; font-weight:700; margin-top:4px;" id="total">S/ 0.00</div>
+
+    <label for="montoRecibido" class="h" style="font-size:16px; margin-top:16px;">Monto Recibido</label>
+    <input type="number" id="montoRecibido" class="input" placeholder="Ejemplo: 50.00" oninput="calcVuelto()">
+
+    <div id="msg" class="notice">Ingrese el monto recibido para calcular el vuelto.</div>
+
+    <div class="row" style="justify-content:flex-end; margin-top:16px;">
+      <button class="btn" onclick="volver()">Volver</button>
+      <button class="btn primary" onclick="confirmarPago()">Confirmar Pago</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* === Cargar total desde el pedido === */
+let pedido = JSON.parse(localStorage.getItem("pedido_dulceria") || "{}");
+let descuento = parseFloat(localStorage.getItem("descuento_aplicado") || 0);
+
+const productos = [
+  { id:1, nombre:"Palomitas Mantequilla", precio:15 },
+  { id:2, nombre:"Palomitas Dulces", precio:17 },
+  { id:3, nombre:"Gaseosa Grande", precio:12 },
+  { id:4, nombre:"Gaseosa Mediana", precio:10 },
+  { id:5, nombre:"Combo 1", precio:25 },
+  { id:6, nombre:"Combo 2", precio:45 },
+  { id:7, nombre:"Agua Mineral", precio:8 },
+  { id:8, nombre:"Chocolate", precio:9 },
+];
+
+function calcTotal(){
+  let subtotal = 0;
+  for(const [id, cant] of Object.entries(pedido)){
+    const p = productos.find(x=>x.id==id);
+    if(p) subtotal += p.precio * cant;
+  }
+  const igv = +(subtotal*0.18).toFixed(2);
+  const total = +(subtotal - descuento + igv).toFixed(2);
+  return total;
+}
+
+const totalVenta = calcTotal();
+document.getElementById("total").textContent = "S/ " + totalVenta.toFixed(2);
+localStorage.setItem("total_venta", totalVenta.toFixed(2));
+
+/* === Calcular vuelto === */
+function calcVuelto(){
+  const monto = parseFloat(document.getElementById("montoRecibido").value || 0);
+  const msg = document.getElementById("msg");
+  if(monto < totalVenta){
+    msg.className = "notice error";
+    msg.textContent = "Monto insuficiente. Faltan S/ " + (totalVenta - monto).toFixed(2);
+  } else {
+    const vuelto = (monto - totalVenta).toFixed(2);
+    msg.className = "notice ok";
+    msg.textContent = "Vuelto a entregar: S/ " + vuelto;
+  }
+}
+
+/* === Confirmar pago === */
+function confirmarPago(){
+  const monto = parseFloat(document.getElementById("montoRecibido").value || 0);
+  const msg = document.getElementById("msg");
+  if(monto < totalVenta){
+    msg.className = "notice error";
+    msg.textContent = "No puede confirmar. El monto recibido es insuficiente.";
+    return;
+  }
+
+  // Guardar datos del pago
+  let cliente = JSON.parse(localStorage.getItem("cliente") || "{}");
+  cliente.metodoPago = "Efectivo";
+  cliente.total = totalVenta;
+  cliente.vuelto = (monto - totalVenta).toFixed(2);
+  localStorage.setItem("cliente", JSON.stringify(cliente));
+
+  msg.className = "notice ok";
+  msg.textContent = "Pago en efectivo registrado correctamente.";
+  setTimeout(()=>window.location.href = "resumen_final.html", 1500);
+}
+
+/* === Volver atrás === */
+function volver(){
+  window.location.href = "cliente_pago.html";
+}
+</script>
+</body>
+</html>

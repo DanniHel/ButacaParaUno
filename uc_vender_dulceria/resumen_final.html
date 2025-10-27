@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resumen Final — Dulcería</title>
+<style>
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; background:#0E0F12; color:#ECEFF7; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; }
+a { color: inherit; text-decoration: none; }
+button, .btn { background:#1F232B; border:1px solid #2A2E37; color:#ECEFF7; border-radius:8px; padding:10px 14px; cursor:pointer; }
+.btn.primary { background:#F2B705; color:#111; border-color:#F2B705; }
+.container { max-width:1040px; margin:0 auto; padding:24px; }
+.h { font-weight:800; margin:8px 0; font-size:20px; }
+.hr { height:1px; background:#2A2E37; border:0; margin:12px 0; }
+.block { border:1px solid #2A2E37; border-radius:12px; padding:16px; background:#13161B; margin-top:12px; }
+.table { width:100%; border-collapse:collapse; margin-top:12px; }
+.table th, .table td { border-bottom:1px solid #2A2E37; padding:10px; text-align:left; }
+.table th { background:#161A22; }
+.notice.ok { border:1px solid #27562E; background:#17231A; color:#C2E5C7; padding:10px 12px; border-radius:8px; margin-top:8px; }
+.footer { margin-top:24px; display:flex; justify-content:center; }
+.meta { color:#A7AEBE; font-size:14px; }
+.badge { font-size:12px; border:1px solid #2A2E37; border-radius:999px; padding:4px 8px; color:#A7AEBE; }
+@page {
+  size: 80mm auto;   /* ancho fijo 80mm, altura automática */
+  margin: 2mm;       /* márgenes muy pequeños */
+}
+
+
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="h">Butaca Para Uno — Comprobante de Venta</div>
+  <div class="hr"></div>
+
+  <div class="block">
+    <div class="notice ok">✅ Venta completada exitosamente.</div>
+
+    <div class="h" style="font-size:16px; margin-top:12px;">Datos del Cliente</div>
+    <div id="datos-cliente" class="meta" style="margin-top:6px;"></div>
+
+    <div class="h" style="font-size:16px; margin-top:18px;">Detalle de Productos</div>
+    <table class="table" id="tabla-pedido">
+      <thead>
+        <tr><th>Producto</th><th>Cantidad</th><th>Precio (S/)</th><th>Subtotal (S/)</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div style="margin-top:12px; text-align:right;">
+      <div>Subtotal: <span id="subtotal">S/ 0.00</span></div>
+      <div>Descuento: <span id="descuento">S/ 0.00</span></div>
+      <div>IGV (18%): <span id="igv">S/ 0.00</span></div>
+      <div style="font-weight:800; margin-top:6px;">Total: <span id="total">S/ 0.00</span></div>
+    </div>
+  </div>
+
+  <div class="block" style="text-align:center;">
+    <div class="h" style="font-size:16px;">Método de Pago</div>
+    <div id="metodo" style="font-size:18px; margin-top:6px;">—</div>
+    <div class="meta" id="comprobante-info" style="margin-top:4px;">—</div>
+  </div>
+
+  <div class="footer" style="gap:12px;">
+   <button class="btn primary" id="imprimir-comprobante">Imprimir Comprobante</button>
+    <a class="btn primary" href="inicio_dulceria.html" id="nueva-venta">Nueva Venta</a>
+  </div>
+</div>
+
+<script>
+/* === Cargar información simulada desde localStorage === */
+const productos = [
+  { id:1, nombre:"Palomitas Mantequilla", precio:15 },
+  { id:2, nombre:"Palomitas Dulces", precio:17 },
+  { id:3, nombre:"Gaseosa Grande", precio:12 },
+  { id:4, nombre:"Gaseosa Mediana", precio:10 },
+  { id:5, nombre:"Combo 1", precio:25 },
+  { id:6, nombre:"Combo 2", precio:45 },
+  { id:7, nombre:"Agua Mineral", precio:8 },
+  { id:8, nombre:"Chocolate", precio:9 },
+];
+
+const pedido = JSON.parse(localStorage.getItem("pedido_dulceria") || "{}");
+const cliente = JSON.parse(localStorage.getItem("cliente") || "{}");
+const descuento = parseFloat(localStorage.getItem("descuento_aplicado") || 0);
+
+function renderCliente(){
+  const el = document.getElementById("datos-cliente");
+  if(!cliente.nombre){
+    el.textContent = "Cliente genérico (sin datos registrados)";
+    return;
+  }
+  el.innerHTML = `
+    <div><strong>${cliente.nombre} ${cliente.apellidos}</strong></div>
+    <div>DNI: ${cliente.dni || '—'}</div>
+    <div>Correo: ${cliente.correo || '—'}</div>
+  `;
+  document.getElementById("metodo").textContent = cliente.metodoPago || '—';
+  document.getElementById("comprobante-info").textContent = "Comprobante: " + (cliente.comprobante || "Boleta");
+}
+
+function renderPedido(){
+  const tbody = document.querySelector("#tabla-pedido tbody");
+  tbody.innerHTML = "";
+  let subtotal = 0;
+
+  for(const [id,cant] of Object.entries(pedido)){
+    const p = productos.find(x=>x.id==id);
+    if(!p) continue;
+    const st = p.precio * cant;
+    subtotal += st;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${p.nombre}</td><td>${cant}</td><td>${p.precio.toFixed(2)}</td><td>${st.toFixed(2)}</td>`;
+    tbody.appendChild(tr);
+  }
+
+  const igv = +((subtotal - descuento)*0.18).toFixed(2);
+  const total = +((subtotal - descuento + igv)).toFixed(2);
+  document.getElementById("subtotal").textContent = "S/ " + subtotal.toFixed(2);
+  document.getElementById("descuento").textContent = "S/ " + descuento.toFixed(2);
+  document.getElementById("igv").textContent = "S/ " + igv.toFixed(2);
+  document.getElementById("total").textContent = "S/ " + total.toFixed(2);
+}
+
+/* Limpiar datos al finalizar */
+document.getElementById("nueva-venta").addEventListener("click", ()=>{
+  localStorage.removeItem("pedido_dulceria");
+  localStorage.removeItem("promo_aplicada");
+  localStorage.removeItem("descuento_aplicado");
+  localStorage.removeItem("cliente");
+});
+
+document.getElementById("imprimir-comprobante").addEventListener("click", () => {
+  const clienteHTML = document.getElementById("datos-cliente").innerHTML;
+  const pedidoHTML = document.querySelector("#tabla-pedido").outerHTML;
+  const subtotal = document.getElementById("subtotal").textContent;
+  const descuento = document.getElementById("descuento").textContent;
+  const igv = document.getElementById("igv").textContent;
+  const total = document.getElementById("total").textContent;
+  const metodoPago = document.getElementById("metodo").textContent;
+  const comprobanteInfo = document.getElementById("comprobante-info").textContent;
+
+  const printWindow = window.open("", "PRINT", "height=800,width=800");
+
+  printWindow.document.write(`
+    <html>
+    <head>
+      <title>Comprobante POS</title>
+      <style>
+        body { font-family: monospace; font-size: 10px; margin: 5px; width: 80mm; }
+        h2, h3 { margin: 2px 0; font-weight: normal; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 2px; }
+        th, td { text-align: left; padding: 2px 0; border-bottom: 1px dashed #000; }
+        th { font-weight: bold; }
+        .totales { text-align: right; font-weight: bold; margin-top: 4px; }
+        .separator { text-align: center; margin: 2px 0; }
+      </style>
+    </head>
+    <body>
+      <h2>Dulcería</h2>
+      <div style="text-align:center;">${comprobanteInfo}</div>
+      <div class="separator">-----------------------------</div>
+
+      <h3>Cliente</h3>
+      <div>${clienteHTML}</div>
+      <div class="separator">-----------------------------</div>
+
+      <h3>Productos</h3>
+      ${pedidoHTML}
+
+      <div class="totales">
+        Subtotal: ${subtotal}<br>
+        Descuento: ${descuento}<br>
+        IGV: ${igv}<br>
+        Total: ${total}
+      </div>
+      <div class="separator">-----------------------------</div>
+
+      Método de Pago: ${metodoPago}
+      <div class="separator">=============================</div>
+
+      <div style="text-align:center;">¡Gracias por su compra!</div>
+    </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+  printWindow.close();
+});
+
+
+  
+renderCliente();
+renderPedido();
+</script>
+</body>
+</html>

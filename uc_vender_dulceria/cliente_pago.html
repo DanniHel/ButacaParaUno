@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cliente y Pago — Dulcería</title>
+<style>
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; background:#0E0F12; color:#ECEFF7; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; }
+a { color: inherit; text-decoration: none; }
+button, .btn { background:#1F232B; border:1px solid #2A2E37; color:#ECEFF7; border-radius:8px; padding:10px 14px; cursor:pointer; }
+.btn.primary { background:#F2B705; color:#111; border-color:#F2B705; }
+.container { max-width:1040px; margin:0 auto; padding:24px; }
+.h { font-weight:800; margin:8px 0; font-size:20px; }
+.hr { height:1px; background:#2A2E37; border:0; margin:12px 0; }
+.row { display:flex; gap:8px; align-items:center; }
+.row-spc { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.block { border:1px solid #2A2E37; border-radius:12px; padding:16px; background:#13161B; margin-top:12px; }
+.input { background:#161A22; border:1px solid #2A2E37; border-radius:8px; padding:10px; color:#ECEFF7; width:100%; }
+.notice { padding:10px 12px; border:1px solid #2A2E37; border-radius:8px; background:#151923; color:#DDE3F1; margin-top:8px; }
+.notice.ok { border-color:#27562E; background:#17231A; color:#C2E5C7; }
+.notice.error { border-color:#7D2D2D; background:#2A1B1B; color:#F2C9C9; }
+.footer { margin-top:24px; border-top:1px solid #2A2E37; padding-top:12px; display:flex; justify-content:space-between; align-items:center; }
+.totalbox { text-align:right; }
+.totalbox div { margin:4px 0; }
+select.input { appearance:none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="row-spc">
+    <div class="h">Butaca Para Uno — Datos del Cliente y Pago</div>
+    <div class="row">
+      <a class="btn" href="pedido.html">Volver</a>
+      <a class="btn" href="cancelar.html">Cancelar Venta</a>
+    </div>
+  </div>
+
+  <div class="hr"></div>
+
+  <div class="block">
+    <div class="h" style="font-size:16px;">Datos del Cliente</div>
+    <div class="row" style="gap:12px; margin-top:8px;">
+      <input id="dni" class="input" placeholder="DNI">
+      <button class="btn primary" id="btn-verificar">Verificar</button>
+    </div>
+    <div style="margin-top:10px;">
+      <input id="nombre" class="input" placeholder="Nombres">
+    </div>
+    <div style="margin-top:10px;">
+      <input id="apellidos" class="input" placeholder="Apellidos">
+    </div>
+    <div style="margin-top:10px;">
+      <input id="correo" class="input" placeholder="Correo electrónico">
+    </div>
+    <div id="msg" class="notice">Ingrese los datos del cliente o verifique el DNI.</div>
+  </div>
+
+  <div class="block">
+    <div class="h" style="font-size:16px;">Tipo de Comprobante</div>
+    <div style="margin-top:8px;">
+      <select id="comprobante" class="input">
+        <option value="boleta">Boleta</option>
+        <option value="factura">Factura</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="h" style="font-size:16px;">Método de Pago</div>
+    <div style="display:flex; gap:12px; margin-top:10px;">
+      <div class="row" style="gap:6px;">
+        <input type="radio" name="pago" id="efectivo" value="Efectivo">
+        <label for="efectivo">Efectivo</label>
+      </div>
+      <div class="row" style="gap:6px;">
+        <input type="radio" name="pago" id="tarjeta" value="Tarjeta">
+        <label for="tarjeta">Tarjeta</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="row">
+      <a class="btn" href="pedido.html">Regresar</a>
+    </div>
+    <div class="totalbox">
+      <div>Subtotal: <span id="subtotal">S/ 0.00</span></div>
+      <div>Descuento: <span id="descuento">S/ 0.00</span></div>
+      <div>IGV (18%): <span id="igv">S/ 0.00</span></div>
+      <div style="font-weight:800;">Total: <span id="total">S/ 0.00</span></div>
+      <div style="margin-top:8px;">
+        <a class="btn primary" href="#" id="btn-confirmar">Confirmar Pago</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* === Cargar datos previos del pedido y promoción === */
+let pedido = JSON.parse(localStorage.getItem("pedido_dulceria") || "{}");
+let promo = JSON.parse(localStorage.getItem("promo_aplicada") || "null");
+let descuento = parseFloat(localStorage.getItem("descuento_aplicado") || 0);
+
+const productos = [
+  { id:1, nombre:"Palomitas Mantequilla", precio:15 },
+  { id:2, nombre:"Palomitas Dulces", precio:17 },
+  { id:3, nombre:"Gaseosa Grande", precio:12 },
+  { id:4, nombre:"Gaseosa Mediana", precio:10 },
+  { id:5, nombre:"Combo 1", precio:25 },
+  { id:6, nombre:"Combo 2", precio:45 },
+  { id:7, nombre:"Agua Mineral", precio:8 },
+  { id:8, nombre:"Chocolate", precio:9 },
+];
+
+function calcSubtotal(){
+  let subtotal = 0;
+  for(const [id,cant] of Object.entries(pedido)){
+    const p = productos.find(x=>x.id==id);
+    if(p) subtotal += p.precio * cant;
+  }
+  return subtotal;
+}
+
+function updateTotales(){
+  const subtotal = calcSubtotal();
+  const igv = +((subtotal - descuento)*0.18).toFixed(2);
+  const total = +((subtotal - descuento + igv)).toFixed(2);
+  document.getElementById("subtotal").textContent = "S/ " + subtotal.toFixed(2);
+  document.getElementById("descuento").textContent = "S/ " + descuento.toFixed(2);
+  document.getElementById("igv").textContent = "S/ " + igv.toFixed(2);
+  document.getElementById("total").textContent = "S/ " + total.toFixed(2);
+}
+updateTotales();
+
+/* === Simular verificación de DNI === */
+document.getElementById("btn-verificar").addEventListener("click", ()=>{
+  const dni = document.getElementById("dni").value.trim();
+  const msg = document.getElementById("msg");
+  if(dni.length!==8){
+    msg.className="notice error";
+    msg.textContent="El número de DNI debe tener 8 dígitos.";
+    return;
+  }
+  msg.className="notice ok";
+  msg.textContent="DNI verificado correctamente. Datos autocompletados.";
+  // Simulación de respuesta de RENIEC
+  document.getElementById("nombre").value = "Cliente " + dni.slice(-3);
+  document.getElementById("apellidos").value = "Pérez García";
+});
+
+/* === Confirmar pago === */
+document.getElementById("btn-confirmar").addEventListener("click", e=>{
+  e.preventDefault();
+
+  const nombre = document.getElementById("nombre").value.trim();
+  const apellidos = document.getElementById("apellidos").value.trim();
+  const pago = document.querySelector('input[name="pago"]:checked');
+  const msg = document.getElementById("msg");
+
+  if(!nombre || !apellidos){
+    msg.className="notice error";
+    msg.textContent="Debe ingresar el nombre y apellidos del cliente.";
+    return;
+  }
+  if(!pago){
+    msg.className="notice error";
+    msg.textContent="Seleccione un método de pago.";
+    return;
+  }
+
+  // Guardar datos del cliente
+  localStorage.setItem("cliente", JSON.stringify({
+    dni: document.getElementById("dni").value,
+    nombre, apellidos,
+    correo: document.getElementById("correo").value,
+    comprobante: document.getElementById("comprobante").value,
+    metodoPago: pago.value
+  }));
+
+  // Redirigir según método de pago
+  if(pago.value === "Efectivo"){
+    window.location.href = "pago_efectivo.html";
+  } else {
+    window.location.href = "resumen_final.html";
+  }
+});
+
+</script>
+</body>
+</html>

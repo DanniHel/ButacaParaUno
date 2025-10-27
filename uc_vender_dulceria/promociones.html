@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Promociones — Dulcería</title>
+<style>
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; background:#0E0F12; color:#ECEFF7; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; }
+a { color: inherit; text-decoration: none; }
+button, .btn { background:#1F232B; border:1px solid #2A2E37; color:#ECEFF7; border-radius:8px; padding:10px 14px; cursor:pointer; }
+.btn.primary { background:#F2B705; color:#111; border-color:#F2B705; }
+.container { max-width:1040px; margin:0 auto; padding:24px; }
+.h { font-weight:800; margin:8px 0; font-size:20px; }
+.hr { height:1px; background:#2A2E37; border:0; margin:12px 0; }
+.row { display:flex; gap:8px; align-items:center; }
+.row-spc { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.block { border:1px solid #2A2E37; border-radius:12px; padding:16px; background:#13161B; margin-top:12px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; margin-top:12px; }
+.card { border:1px solid #2A2E37; border-radius:12px; background:#151820; overflow:hidden; display:flex; flex-direction:column; justify-content:space-between; }
+.card .body { padding:12px; display:flex; flex-direction:column; justify-content:space-between; height:180px; }
+.meta { color:#A7AEBE; font-size:14px; }
+.notice { padding:10px 12px; border:1px solid #2A2E37; border-radius:8px; background:#151923; color:#DDE3F1; margin-top:8px; }
+.notice.ok { border-color:#27562E; background:#17231A; color:#C2E5C7; }
+.notice.error { border-color:#7D2D2D; background:#2A1B1B; color:#F2C9C9; }
+.footer { margin-top:24px; border-top:1px solid #2A2E37; padding-top:12px; display:flex; justify-content:space-between; align-items:center; }
+.totalbox { text-align:right; }
+.totalbox div { margin:4px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="row-spc">
+    <div class="h">Butaca Para Uno — Promociones Disponibles</div>
+    <div class="row">
+      <a class="btn" href="pedido.html">Volver</a>
+      <a class="btn" href="cancelar.html">Cancelar Venta</a>
+    </div>
+  </div>
+
+  <div class="hr"></div>
+
+  <div class="block">
+    <div class="h" style="font-size:16px;">Seleccione una promoción para aplicar</div>
+    <div id="promo-grid" class="grid"></div>
+    <div id="msg" class="notice">Seleccione una promoción para aplicar al pedido actual.</div>
+  </div>
+
+  <div class="footer">
+    <div class="row">
+      <a class="btn" href="pedido.html">Regresar al Pedido</a>
+    </div>
+    <div class="totalbox">
+      <div>Subtotal: <span id="subtotal">S/ 0.00</span></div>
+      <div>Descuento: <span id="descuento">S/ 0.00</span></div>
+      <div>IGV (18%): <span id="igv">S/ 0.00</span></div>
+      <div style="font-weight:800;">Total: <span id="total">S/ 0.00</span></div>
+      <div style="margin-top:8px;">
+        <a class="btn primary" href="cliente_pago.html" id="btn-continuar">Proceder al Pago</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* === Datos simulados === */
+const promociones = [
+  { id:1, nombre:"Combo Feliz", tipo:"Porcentaje", valor:0.10, desc:"10% de descuento al comprar un combo y una bebida." },
+  { id:2, nombre:"Dulce Pareja", tipo:"Monto", valor:5, desc:"S/ 5.00 de descuento por compras mayores a S/40." },
+  { id:3, nombre:"Hora Dorada", tipo:"Porcentaje", valor:0.15, desc:"15% de descuento entre las 3pm y 5pm." },
+  { id:4, nombre:"Promoción Premium", tipo:"Monto", valor:10, desc:"S/10 de descuento si el total supera S/60." },
+];
+
+/* === Pedido desde localStorage === */
+let pedido = JSON.parse(localStorage.getItem("pedido_dulceria") || "{}");
+const productos = [
+  { id:1, nombre:"Palomitas Mantequilla", precio:15 },
+  { id:2, nombre:"Palomitas Dulces", precio:17 },
+  { id:3, nombre:"Gaseosa Grande", precio:12 },
+  { id:4, nombre:"Gaseosa Mediana", precio:10 },
+  { id:5, nombre:"Combo 1", precio:25 },
+  { id:6, nombre:"Combo 2", precio:45 },
+  { id:7, nombre:"Agua Mineral", precio:8 },
+  { id:8, nombre:"Chocolate", precio:9 },
+];
+
+function calcularSubtotal(){
+  let subtotal = 0;
+  for(const [id,cant] of Object.entries(pedido)){
+    const p = productos.find(x=>x.id==id);
+    if(p) subtotal += p.precio * cant;
+  }
+  return subtotal;
+}
+
+/* === Renderizar Promos === */
+function renderPromos(){
+  const grid = document.getElementById("promo-grid");
+  grid.innerHTML = "";
+  promociones.forEach(p=>{
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="body">
+        <div>
+          <div style="font-weight:700;">${p.nombre}</div>
+          <div class="meta">${p.tipo==="Porcentaje" ? (p.valor*100)+"% de descuento" : "S/ "+p.valor.toFixed(2)+" menos"}</div>
+          <div style="margin-top:6px;">${p.desc}</div>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn primary" data-id="${p.id}">Aplicar</button>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+/* === Calcular Totales === */
+function recalc(descuentoAplicado=0){
+  const subtotal = calcularSubtotal();
+  const descuento = descuentoAplicado;
+  const base = Math.max(subtotal - descuento, 0);
+  const igv = +(base*0.18).toFixed(2);
+  const total = +(base + igv).toFixed(2);
+  document.getElementById("subtotal").textContent = "S/ " + subtotal.toFixed(2);
+  document.getElementById("descuento").textContent = "S/ " + descuento.toFixed(2);
+  document.getElementById("igv").textContent = "S/ " + igv.toFixed(2);
+  document.getElementById("total").textContent = "S/ " + total.toFixed(2);
+}
+
+/* === Aplicar promoción === */
+document.addEventListener("click", e=>{
+  if(e.target.dataset.id){
+    const id = parseInt(e.target.dataset.id);
+    const promo = promociones.find(p=>p.id===id);
+    const subtotal = calcularSubtotal();
+    const msg = document.getElementById("msg");
+
+    let descuento = 0;
+    let aplica = true;
+
+    // Simulación de condiciones
+    if(promo.id===2 && subtotal <= 40) aplica = false;
+    if(promo.id===4 && subtotal <= 60) aplica = false;
+    if(promo.id===3){
+      const hour = new Date().getHours();
+      if(hour < 15 || hour >= 17) aplica = false;
+    }
+
+    if(!aplica){
+      msg.className = "notice error";
+      msg.textContent = "La promoción seleccionada no es aplicable al pedido actual.";
+      recalc(0);
+      return;
+    }
+
+    if(promo.tipo==="Monto") descuento = promo.valor;
+    else if(promo.tipo==="Porcentaje") descuento = +(subtotal * promo.valor).toFixed(2);
+
+    msg.className = "notice ok";
+    msg.textContent = `Promoción "${promo.nombre}" aplicada correctamente. Descuento: S/ ${descuento.toFixed(2)}.`;
+
+    // Guardar en localStorage (opcional)
+    localStorage.setItem("promo_aplicada", JSON.stringify(promo));
+    localStorage.setItem("descuento_aplicado", descuento);
+
+    recalc(descuento);
+  }
+});
+
+/* Inicial */
+renderPromos();
+recalc();
+</script>
+</body>
+</html>
